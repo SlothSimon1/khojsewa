@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khoj Sewa - Smart Local Service Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+        }
+        
+        .service-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .request-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .request-card.accepted {
+            border-left: 4px solid #10b981;
+            background: rgba(240, 253, 250, 0.95);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-call {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-call:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-accept {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-accept:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.4);
+        }
+        
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #fef08a;
+            color: #92400e;
+        }
+        
+        .status-accepted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .input-field {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .section-title {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .section-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="border-b border-white border-opacity-20 glass-card m-4 mb-6">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold text-white" style="margin-bottom: 0;">Khoj Sewa</h1>
+                <p class="text-white text-opacity-80 text-sm">Smart Local Service Finder - Nepal</p>
+            </div>
+            {% if not user_email %}
+            {% else %}
+            <div class="text-right">
+                <p class="text-white text-opacity-90 text-sm">
+                    <span class="font-semibold">{{ user_email }}</span>
+                    {% if user_role == 'admin' %}
+                    <span class="ml-2 inline-block bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">ADMIN</span>
+                    {% else %}
+                    <span class="ml-2 inline-block bg-blue-400 text-blue-900 px-3 py-1 rounded-full text-xs font-bold">USER</span>
+                    {% endif %}
+                </p>
+                <a href="{% url 'logout' %}" class="btn-logout mt-2">Logout</a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 pb-20">
+        <!-- LOGIN SECTION -->
+        {% if not user_email %}
+        <div class="max-w-2xl mx-auto mt-12">
+            <!-- Login Choice Section -->
+            {% if login_mode == None %}
+            <div class="glass-card p-8 text-center">
+                <h2 class="text-3xl font-bold text-white mb-2">Welcome to Khoj Sewa</h2>
+                <p class="text-white text-opacity-80 mb-12">Smart Local Service Finder - Nepal</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- User Login Option -->
+                    <a href="{% url 'login' %}?mode=user" class="group cursor-pointer">
+                        <div class="glass-card p-8 h-full hover:bg-blue-400 hover:bg-opacity-20 transition-all duration-300">
+                            <div class="text-5xl mb-4">👤</div>
+                            <h3 class="text-2xl font-bold text-white mb-2">User Login</h3>
+                            <p class="text-white text-opacity-80 mb-6">
+                                Find and request services in your area
+                            </p>
+                            <div class="btn-primary inline-block group-hover:-translate-y-1 transition-transform">
+                                Continue as User
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Admin Login Option -->
+                    <a href="{% url 'login' %}?mode=admin" class="group cursor-pointer">
+                        <div class="glass-card p-8 h-full hover:bg-yellow-400 hover:bg-opacity-20 transition-all duration-300">
+                            <div class="text-5xl mb-4">👨‍💼</div>
+                            <h3 class="text-2xl font-bold text-white mb-2">Admin Login</h3>
+                            <p class="text-white text-opacity-80 mb-6">
+                                Manage services and approve requests
+                            </p>
+                            <div class="btn-primary inline-block group-hover:-translate-y-1 transition-transform">
+                                Continue as Admin
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- User Login Form -->
+            {% elif login_mode == 'user' %}
+            <div class="max-w-md mx-auto">
+                <div class="glass-card p-8">
+                    <a href="{% url 'login' %}" class="inline-block text-white hover:text-white text-opacity-80 hover:text-opacity-100 mb-6 transition">
+                        ← Back
+                    </a>
+                    
+                    <h2 class="text-3xl font-bold text-white mb-2">User Login</h2>
+                    <p class="text-white text-opacity-80 mb-8">Enter your email to continue</p>
+                    
+                    {% if login_error %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+                        {{ login_error }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{% url 'login' %}" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="mode" value="user">
+                        <div>
+                            <label class="block text-white text-sm font-semibold mb-2">Email Address</label>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                placeholder="your.email@example.com" 
+                                class="input-field w-full"
+                                required
+                            >
+                        </div>
+                        <button type="submit" class="btn-primary w-full">Login as User</button>
+                    </form>
+                    
+                    <div class="mt-6 pt-6 border-t border-white border-opacity-20">
+                        <p class="text-white text-opacity-70 text-xs text-center">
+                            Demo: Use any email address to login as a regular user
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Login Form -->
+            {% elif login_mode == 'admin' %}
+            <div class="max-w-md mx-auto">
+                <div class="glass-card p-8">
+                    <a href="{% url 'login' %}" class="inline-block text-white hover:text-white text-opacity-80 hover:text-opacity-100 mb-6 transition">
+                        ← Back
+                    </a>
+                    
+                    <h2 class="text-3xl font-bold text-white mb-2">Admin Login</h2>
+                    <p class="text-white text-opacity-80 mb-8">Use your admin credentials</p>
+                    
+                    {% if login_error %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+                        {{ login_error }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{% url 'login' %}" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="mode" value="admin">
+                        <div>
+                            <label class="block text-white text-sm font-semibold mb-2">Admin Email</label>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                placeholder="admin@khoj.com" 
+                                class="input-field w-full"
+                                required
+                            >
+                        </div>
+                        <button type="submit" class="btn-primary w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:shadow-lg hover:shadow-yellow-400">Login as Admin</button>
+                    </form>
+                    
+                    <div class="mt-6 pt-6 border-t border-white border-opacity-20">
+                        <p class="text-white text-opacity-70 text-xs text-center">
+                            Use the email: <strong>admin@khoj.com</strong> for admin access
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- MAIN DASHBOARD -->
+        {% else %}
+        
+        <!-- SEARCH & FILTER SECTION -->
+        <div class="glass-card p-8 mb-8 mt-8">
+            <h2 class="section-title">Find Services</h2>
+            <p class="section-subtitle">Search for the service you need</p>
+            
+            <form method="GET" action="{% url 'home' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-white text-sm font-semibold mb-2">Service Type</label>
+                    <select 
+                        name="service_type" 
+                        class="input-field w-full"
+                    >
+                        <option value="">All Services</option>
+                        {% for stype in service_types %}
+                        <option value="{{ stype }}" {% if stype == selected_service_type %}selected{% endif %}>{{ stype }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-white text-sm font-semibold mb-2">Location</label>
+                    <select 
+                        name="location" 
+                        class="input-field w-full"
+                    >
+                        <option value="">All Locations</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc }}" {% if loc == selected_location %}selected{% endif %}>{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="flex items-end">
+                    <button type="submit" class="btn-primary w-full">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- SERVICES SECTION -->
+        <div class="mb-12">
+            <h2 class="section-title">Available Services</h2>
+            <p class="section-subtitle">Browse and request services</p>
+            
+            {% if no_services_found %}
+            <div class="glass-card p-8 text-center">
+                <p class="text-white text-lg">No services found matching your criteria. Try different filters.</p>
+            </div>
+            {% elif services %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for service in services %}
+                <div class="service-card p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ service.name }}</h3>
+                    <div class="space-y-3 text-gray-700">
+                        <p><span class="font-semibold">Type:</span> {{ service.type }}</p>
+                        <p><span class="font-semibold">Location:</span> {{ service.location }}</p>
+                        <p><span class="font-semibold">Phone:</span> 
+                            <a href="tel:{{ service.phone }}" class="btn-call">
+                                📞 Call
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-card p-8 text-center">
+                <p class="text-white text-lg">No services available at the moment.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- REQUEST SERVICE SECTION -->
+        <div class="mb-12">
+            <h2 class="section-title">Request a Service</h2>
+            <p class="section-subtitle">Tell us what service you need</p>
+            
+            <div class="glass-card p-8">
+                <form method="POST" action="{% url 'request_service' %}">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-white text-sm font-semibold mb-2">Your Name</label>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                placeholder="Enter your name"
+                                class="input-field w-full"
+                                required
+                            >
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white text-sm font-semibold mb-2">Service Type</label>
+                            <select 
+                                name="service_type" 
+                                class="input-field w-full"
+                                required
+                            >
+                                <option value="">Select a service</option>
+                                <option value="Tutor">Tutor</option>
+                                <option value="Electrician">Electrician</option>
+                                <option value="Plumber">Plumber</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white text-sm font-semibold mb-2">Location</label>
+                            <select 
+                                name="location" 
+                                class="input-field w-full"
+                                required
+                            >
+                                <option value="">Select a location</option>
+                                <option value="Kathmandu">Kathmandu</option>
+                                <option value="Lalitpur">Lalitpur</option>
+                                <option value="Bhaktapur">Bhaktapur</option>
+                                <option value="Pokhara">Pokhara</option>
+                                <option value="Biratnagar">Biratnagar</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white text-sm font-semibold mb-2">Problem Description</label>
+                            <textarea 
+                                name="problem" 
+                                placeholder="Describe what you need"
+                                class="input-field w-full"
+                                rows="1"
+                                required
+                            ></textarea>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary mt-6 w-full md:w-auto">Submit Request</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- REQUESTS LIST SECTION -->
+        <div class="mb-12">
+            <h2 class="section-title">Service Requests</h2>
+            <p class="section-subtitle">{{ service_requests.count }} request{{ service_requests.count|pluralize }}</p>
+            
+            {% if service_requests %}
+            <div class="space-y-4">
+                {% for req in service_requests %}
+                <div class="request-card p-6 {% if req.status == 'Accepted' %}accepted{% endif %}">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div>
+                            <p class="text-gray-600 text-xs font-semibold uppercase">Name</p>
+                            <p class="text-gray-800 font-semibold">{{ req.name }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-gray-600 text-xs font-semibold uppercase">Service</p>
+                            <p class="text-gray-800 font-semibold">{{ req.type }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-gray-600 text-xs font-semibold uppercase">Location</p>
+                            <p class="text-gray-800 font-semibold">{{ req.location }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-gray-600 text-xs font-semibold uppercase">Status</p>
+                            <span class="status-badge {% if req.status == 'Accepted' %}status-accepted{% else %}status-pending{% endif %}">
+                                {{ req.status }}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-end justify-between md:justify-end gap-2">
+                            {% if user_role == 'admin' and req.status == 'Pending' %}
+                            <form method="POST" action="{% url 'accept_request' req.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-accept">Accept</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <p class="text-gray-600 text-sm">
+                            <span class="font-semibold">Problem:</span> {{ req.problem }}
+                        </p>
+                        <p class="text-gray-500 text-xs mt-2">
+                            Requested: {{ req.created_at|date:"M d, Y - H:i" }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-card p-8 text-center">
+                <p class="text-white text-lg">No service requests yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% endif %}
+    </div>
+
+</body>
+</html>

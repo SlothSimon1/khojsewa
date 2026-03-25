@@ -1,0 +1,228 @@
+<!-- Google Maps Widget for displaying expert locations -->
+<!-- Requires: google_maps_api_key in context from Django view -->
+
+<style>
+    .maps-container {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+    }
+    
+    #mapContainer {
+        width: 100%;
+        min-height: 400px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .api-key-warning {
+        padding: 15px;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #856404;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-size: 0.9em;
+    }
+    
+    .info-window-content {
+        padding: 12px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 250px;
+    }
+    
+    .info-window-content h3 {
+        margin: 0 0 8px 0;
+        color: #333;
+        font-size: 1.1em;
+    }
+    
+    .info-window-content p {
+        margin: 4px 0;
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .info-window-content .expertise {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .info-window-content .phone {
+        color: #10b981;
+        font-weight: 600;
+    }
+    
+    .map-legend {
+        margin-top: 15px;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 6px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    .expert-marker {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .marker-expertise {
+        background: #667eea;
+    }
+    
+    .marker-current {
+        background: #10b981;
+        width: 16px;
+        height: 16px;
+    }
+</style>
+
+{% if google_maps_api_key == 'YOUR_API_KEY_HERE' or not google_maps_api_key %}
+<div class="api-key-warning">
+    <strong>⚠️ Google Maps API Not Configured</strong><br>
+    To enable maps, please:
+    <ol>
+        <li>Get a FREE API key: <a href="https://console.cloud.google.com/" target="_blank" style="color: #0066cc;">Google Cloud Console</a></li>
+        <li>Follow: <a href="/GOOGLE_MAPS_SETUP.md" style="color: #0066cc;">GOOGLE_MAPS_SETUP.md</a></li>
+        <li>Add key to <code>config/settings.py</code> or environment variable</li>
+        <li>Restart Django server</li>
+    </ol>
+</div>
+{% else %}
+<div class="maps-container">
+    <div id="mapContainer"></div>
+    <div class="map-legend">
+        <div><span class="expert-marker marker-expertise"></span> Available Experts</div>
+        {% if is_current_expert %}
+        <div><span class="expert-marker marker-current"></span> Your Location</div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Google Maps API Script -->
+{% if experts_json %}
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+{% endif %}
+
+<script>
+    let map;
+    let markers = [];
+    let infoWindows = [];
+    
+    // Check if API key is valid
+    const apiKey = "{{ google_maps_api_key }}";
+    const isValidKey = apiKey && apiKey !== 'YOUR_API_KEY_HERE' && apiKey.length > 20;
+    
+    function initMap() {
+        // Check if map container exists
+        const mapContainer = document.getElementById('mapContainer');
+        if (!mapContainer) {
+            console.warn('Map container not found. API key may not be configured.');
+            return;
+        }
+        
+        const expertsJson = "{{ experts_json|escapejs }}";
+        let experts = [];
+        try {
+            experts = JSON.parse(expertsJson);
+        } catch (e) {
+            console.warn('Failed to parse experts data:', e);
+            experts = [];
+        }
+        
+        // Default center (Nepal)
+        const defaultCenter = { lat: 28.3949, lng: 84.1240 };
+        
+        if (!experts || experts.length === 0) {
+            // Default map if no experts
+            map = new google.maps.Map(mapContainer, {
+                zoom: 7,
+                center: defaultCenter,
+                mapTypeControl: true,
+                fullscreenControl: true,
+                zoomControl: true,
+            });
+            return;
+        }
+        
+        // Calculate bounds for all markers
+        const bounds = new google.maps.LatLngBounds();
+        
+        // Create map centered on first expert
+        map = new google.maps.Map(mapContainer, {
+            zoom: 7,
+            center: { lat: parseFloat(experts[0].lat), lng: parseFloat(experts[0].lng)},
+            mapTypeControl: true,
+            fullscreenControl: true,
+            zoomControl: true,
+        });
+        
+        // Add markers for each expert
+        experts.forEach((expert, index) => {
+            const position = { lat: parseFloat(expert.lat), lng: parseFloat(expert.lng) };
+            bounds.extend(position);
+            
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: expert.name,
+                icon: expert.is_current ? 
+                    'http://maps.google.com/mapfiles/ms/icons/green-dot.png' :
+                    'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            });
+            
+            markers.push(marker);
+            
+            // Create info window content
+            const infoContent = document.createElement('div');
+            infoContent.className = 'info-window-content';
+            infoContent.innerHTML = `
+                <h3>${expert.name}${expert.is_current ? ' (You)' : ''}</h3>
+                <p><strong>Expertise:</strong> <span class="expertise">${expert.expertise}</span></p>
+                <p><strong>Experience:</strong> ${expert.years_experience} years</p>
+                <p><strong>Location:</strong> ${expert.location}</p>
+                <p><strong>Phone:</strong> <span class="phone">${expert.phone}</span></p>
+            `;
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: infoContent,
+                maxWidth: 300
+            });
+            
+            infoWindows.push(infoWindow);
+            
+            marker.addListener('click', () => {
+                // Close all other info windows
+                infoWindows.forEach(iw => iw.close());
+                infoWindow.open(map, marker);
+            });
+            
+            // Open first marker's info window (current expert if exists)
+            if (index === 0 && expert.is_current) {
+                infoWindow.open(map, marker);
+            }
+        });
+        
+        // Fit map to bounds if multiple experts
+        if (experts.length > 1) {
+            map.fitBounds(bounds);
+            // Add padding
+            map.setCenter(bounds.getCenter());
+        }
+    }
+    
+    // Initialize map only when API is loaded and valid
+    if (isValidKey) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMap);
+        } else {
+            // Wait for Google Maps API to load
+            setTimeout(initMap, 500);
+        }
+    }
+</script>

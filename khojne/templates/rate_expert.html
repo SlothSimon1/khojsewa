@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Expert - Khoj Sewa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        
+        .expert-card {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .expert-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .expert-info {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 5px;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 12px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .rating-options {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        
+        .rating-option {
+            position: relative;
+        }
+        
+        .rating-option input {
+            display: none;
+        }
+        
+        .rating-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .rating-option input:checked + .rating-label {
+            border-color: #667eea;
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        
+        .rating-label:hover {
+            border-color: #667eea;
+        }
+        
+        .star {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        
+        .rating-text {
+            font-size: 0.8em;
+            text-align: center;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rate Your Expert</h1>
+        <p class="subtitle">How was your experience?</p>
+        
+        <div class="expert-card">
+            <div class="expert-name">{{ expert.name }}</div>
+            <div class="expert-info">{{ expert.expertise }}</div>
+            <div class="expert-info">{{ expert.location }}</div>
+        </div>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Your Rating *</label>
+                <div class="rating-options">
+                    {% for rating_value, rating_label in rating_choices %}
+                    <div class="rating-option">
+                        <input type="radio" id="rating_{{ rating_value }}" name="rating" value="{{ rating_value }}" required>
+                        <label for="rating_{{ rating_value }}" class="rating-label">
+                            <div class="star">
+                                {% if rating_value == 1 %}⭐{% elif rating_value == 2 %}⭐⭐{% elif rating_value == 3 %}⭐⭐⭐{% elif rating_value == 4 %}⭐⭐⭐⭐{% else %}⭐⭐⭐⭐⭐{% endif %}
+                            </div>
+                            <div class="rating-text">{{ rating_value }}</div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="comment">Your Feedback (Optional)</label>
+                <textarea id="comment" name="comment" placeholder="Share your experience..."></textarea>
+            </div>
+            
+            <div class="buttons">
+                <a href="{% url 'dashboard' %}" class="btn btn-cancel">Skip</a>
+                <button type="submit" class="btn">Submit Rating</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

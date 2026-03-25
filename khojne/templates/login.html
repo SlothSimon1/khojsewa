@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Khoj Sewa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-home {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .back-home:hover {
+            text-decoration: underline;
+        }
+        
+        .role-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .role-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+        
+        .role-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .role-tab:hover {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'home' %}" class="back-home">← Back Home</a>
+        
+        <h1>Login</h1>
+        <p class="subtitle">Sign in to your account</p>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <div class="role-tabs">
+            <button class="role-tab {% if role == 'user' %}active{% endif %}" onclick="switchRole(event,'user')">User</button>
+            <button class="role-tab {% if role == 'expert' %}active{% endif %}" onclick="switchRole(event,'expert')">Expert</button>
+        </div>
+        
+        <form method="post" id="loginForm">
+            {% csrf_token %}
+            
+            <input type="hidden" id="roleInput" name="role" value="{{ role }}">
+            
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+        
+        <div class="register-link">
+            <span id="registerText">
+                {% if role == 'expert' %}
+                Not an expert yet? <a href="{% url 'register_expert' %}">Register as Expert</a>
+                {% else %}
+                Don't have an account? <a href="{% url 'register_user' %}">Register as User</a>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <script>
+        // URL constants evaluated at template render time
+        const registerUserUrl = "{% url 'register_user' %}";
+        const registerExpertUrl = "{% url 'register_expert' %}";
+        
+        function switchRole(event, role) {
+            document.getElementById('roleInput').value = role;
+            
+            // Update tabs
+            document.querySelectorAll('.role-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update register link text
+            const registerText = document.getElementById('registerText');
+            if (role === 'expert') {
+                registerText.innerHTML = 'Not an expert yet? <a href="' + registerExpertUrl + '">Register as Expert</a>';
+            } else {
+                registerText.innerHTML = 'Don\'t have an account? <a href="' + registerUserUrl + '">Register as User</a>';
+            }
+        }
+    </script>
+</body>
+</html>

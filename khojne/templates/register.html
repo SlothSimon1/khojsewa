@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Khoj Sewa</title>
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+        }
+
+        .container {
+            background:white;
+            border-radius:20px;
+            box-shadow:0 20px 60px rgba(0,0,0,0.3);
+            padding:50px;
+            max-width:500px;
+            width:100%;
+        }
+
+        h1 { color:#333; margin-bottom:10px; }
+        .subtitle { color:#666; margin-bottom:30px; }
+
+        .form-group { margin-bottom:20px; }
+
+        label {
+            display:block;
+            margin-bottom:8px;
+            font-weight:600;
+        }
+
+        input, select {
+            width:100%;
+            padding:12px;
+            border:2px solid #e0e0e0;
+            border-radius:8px;
+        }
+
+        input:focus, select:focus {
+            outline:none;
+            border-color:#667eea;
+        }
+
+        .btn {
+            width:100%;
+            padding:12px;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white;
+            border:none;
+            border-radius:8px;
+            font-weight:600;
+            cursor:pointer;
+        }
+
+        .login-link {
+            text-align:center;
+            margin-top:20px;
+        }
+
+        .back-home {
+            display:inline-block;
+            margin-bottom:20px;
+            color:#667eea;
+            text-decoration:none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<a href="{% url 'home' %}" class="back-home">← Back Home</a>
+
+{% if role == 'user' %}
+<h1>Create User Account</h1>
+<p class="subtitle">Register to find service providers</p>
+{% else %}
+<h1>Become an Expert</h1>
+<p class="subtitle">Start accepting requests</p>
+{% endif %}
+
+{% if error %}
+<div style="color:red;">{{ error }}</div>
+{% endif %}
+
+<form method="post">
+{% csrf_token %}
+
+<div class="form-group">
+<label>Full Name *</label>
+<input type="text" name="name" required>
+</div>
+
+<div class="form-group">
+<label>Email *</label>
+<input type="email" name="email" required>
+</div>
+
+<div class="form-group">
+<label>Phone *</label>
+<input type="tel" name="phone" required>
+</div>
+
+<div class="form-group">
+<label>Password *</label>
+<input type="password" name="password" required>
+</div>
+
+<div class="form-group">
+<label>Confirm Password *</label>
+<input type="password" name="confirm_password" required>
+</div>
+
+{% if role == 'expert' %}
+
+<!-- ✅ EXPERTISE -->
+<div class="form-group">
+<label>Area of Expertise *</label>
+
+<select name="expertise">
+<option value="">Select service</option>
+{% for code,name in services %}
+<option value="{{ name }}">{{ name }}</option>
+{% endfor %}
+</select>
+
+<!-- ✍️ CUSTOM INPUT -->
+<input type="text" name="custom_expertise"
+placeholder="Or write your service here"
+style="margin-top:10px;">
+</div>
+
+<div class="form-group">
+<label>Experience *</label>
+<input type="number" name="years_experience" required>
+</div>
+
+<div class="form-group">
+<label>Location *</label>
+<select name="location" required>
+<option value="">Select location</option>
+{% for code,name in locations %}
+<option value="{{ name }}">{{ name }}</option>
+{% endfor %}
+</select>
+</div>
+
+{% endif %}
+
+<button class="btn">Register</button>
+
+</form>
+
+<div class="login-link">
+Already have account? <a href="{% url 'login' %}">Login</a>
+</div>
+
+</div>
+
+</body>
+</html>

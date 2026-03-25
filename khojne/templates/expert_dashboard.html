@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expert Dashboard - Khoj Sewa</title>
+
+<!-- ✅ Leaflet FREE MAP -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f5f5;}
+
+header{background:linear-gradient(135deg,#f093fb,#f5576c);color:white;padding:20px;}
+.header-content{display:flex;justify-content:space-between;align-items:center;}
+.logout-btn{color:white;border:1px solid white;padding:8px 15px;text-decoration:none;border-radius:8px;}
+
+.container{padding:30px;}
+
+.stats-section{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:30px;}
+.stat-card{background:#f5576c;color:white;padding:20px;border-radius:10px;text-align:center;}
+
+.content-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+.section{background:white;padding:20px;border-radius:10px;}
+
+.request-card{background:#f9f9f9;padding:15px;margin-bottom:10px;border-left:4px solid #f5576c;}
+
+.btn{padding:8px 15px;border:none;border-radius:5px;color:white;cursor:pointer;}
+.btn-accept{background:green;}
+.btn-complete{background:blue;}
+.btn-cancel{background:red;}
+
+#mapContainer{height:400px;margin-bottom:30px;border-radius:12px;}
+
+@media(max-width:768px){
+.content-wrapper{grid-template-columns:1fr;}
+.stats-section{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="header-content">
+<div>🔧 Khoj Sewa</div>
+<div>
+Online - {{ expert.name }}
+<a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+</div>
+</div>
+</header>
+
+<div class="container">
+
+<!-- STATS -->
+<div class="stats-section">
+<div class="stat-card">{{ pending_count }}<br>Incoming</div>
+<div class="stat-card">{{ accepted_count }}<br>Active</div>
+<div class="stat-card">{{ expert.years_experience }}<br>Experience</div>
+<div class="stat-card">{{ expert.location }}<br>Location</div>
+</div>
+
+<!-- ✅ FREE MAP (NO INCLUDE ERROR) -->
+<div id="mapContainer"></div>
+
+<!-- CONTENT -->
+<div class="content-wrapper">
+
+<!-- INCOMING -->
+<div class="section">
+<h2>Incoming Requests</h2>
+
+{% for request in incoming_requests %}
+<div class="request-card">
+<b>{{ request.type }} - {{ request.location }}</b><br>
+User: {{ request.user.name }}<br>
+Phone: {{ request.user.phone }}<br>
+
+<form method="post" action="{% url 'accept_request' request.id %}">
+{% csrf_token %}
+<button class="btn btn-accept">Accept</button>
+</form>
+
+</div>
+{% empty %}
+<p>No requests</p>
+{% endfor %}
+</div>
+
+<!-- ACTIVE -->
+<div class="section">
+<h2>Active Jobs</h2>
+
+{% for request in accepted_requests %}
+<div class="request-card">
+
+<b>{{ request.type }} - {{ request.location }}</b><br>
+User: {{ request.user.name }}<br>
+
+{% if request.status != "Completed" %}
+<form method="post" action="{% url 'complete_request' request.id %}">
+{% csrf_token %}
+<button class="btn btn-complete">Complete</button>
+</form>
+
+<form method="post" action="{% url 'cancel_request' request.id %}">
+{% csrf_token %}
+<button class="btn btn-cancel">Cancel</button>
+</form>
+{% else %}
+<b>Completed</b>
+{% endif %}
+
+</div>
+{% empty %}
+<p>No active jobs</p>
+{% endfor %}
+</div>
+
+</div>
+</div>
+
+<!-- ✅ MAP SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+const map = L.map('mapContainer').setView([28.3949, 84.1240], 7);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+attribution: '© OpenStreetMap'
+}).addTo(map);
+
+let experts = [];
+
+try {
+experts = JSON.parse('{{ experts_json|escapejs }}');
+} catch (e) {}
+
+if (experts.length === 0) return;
+
+const bounds = [];
+
+experts.forEach(expert => {
+const lat = parseFloat(expert.lat);
+const lng = parseFloat(expert.lng);
+
+L.marker([lat, lng])
+.addTo(map)
+.bindPopup(`<b>${expert.name}</b><br>${expert.expertise}`);
+
+bounds.push([lat, lng]);
+});
+
+map.fitBounds(bounds, { padding: [50, 50] });
+
+});
+</script>
+
+</body>
+</html>
